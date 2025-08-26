@@ -7,10 +7,19 @@ from fastapi import FastAPI, Request, Query
 from pydantic import BaseModel
 import os
 import hashlib
+from dotenv import load_dotenv
+from pngtosvg_v2.potracemyown import bitmap_to_bezier
 
+
+load_dotenv()
 app = fastapi.FastAPI()
 
 WECHAT_TOKEN = os.getenv("WECHAT_TOKEN")
+
+@app.get('/')
+async def root():
+    return {"message": "Hello World"}
+
 
 # 处理微信服务器验证（GET）
 @app.get("/wx-server/msg/")
@@ -47,6 +56,10 @@ async def get_wx_message(request: Request):
     if msg_type == "text":
         content = root.find("Content").text
         reply_content = f"你说了：{content}"
+    elif msg_type == "image":
+        pic_url  = root.findtext("PicUrl")      # 图片 CDN 地址（有效期 3 天）
+
+        reply_content = f"收到图片！\nCDN地址：{pic_url}"
     else:
         reply_content = "暂不支持此类型消息"
 
