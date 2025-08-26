@@ -3,7 +3,32 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 import time
 import xml.etree.ElementTree as ET
+from fastapi import FastAPI, Request, Query
+from pydantic import BaseModel
+import os
+import hashlib
+
 app = fastapi.FastAPI()
+
+WECHAT_TOKEN = os.getenv("WECHAT_TOKEN")
+
+# 处理微信服务器验证（GET）
+@app.get("/wx-server/msg/")
+async def wechat_verify(
+    signature: str = Query(...),
+    timestamp: str = Query(...),
+    nonce: str = Query(...),
+    echostr: str = Query(...)
+):
+    """
+    微信服务器首次验证接口
+    """
+    tmp_str = "".join(sorted([WECHAT_TOKEN, timestamp, nonce]))
+    hash_str = hashlib.sha1(tmp_str.encode()).hexdigest()
+    if hash_str == signature:
+        return int(echostr)
+    return "fail"
+
 
 @app.post('/wx-server/msg/')
 async def get_wx_message(request: Request):
@@ -35,4 +60,8 @@ async def get_wx_message(request: Request):
         <Content><![CDATA[{reply_content}]]></Content>
     </xml>
     """
-    return reply_xml
+    return fastapi.Response(content=reply_xml, media_type="application/xml")
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, host='0.0.0.0', port=8999)
