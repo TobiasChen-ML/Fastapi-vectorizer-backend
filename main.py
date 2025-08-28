@@ -8,17 +8,21 @@ from pydantic import BaseModel
 import os
 import hashlib
 from dotenv import load_dotenv
-from pngtosvg_v2.potracemyown import bitmap_to_bezier
+
+from util import *
+from worker import process_image
+import httpx
+from fastapi import Request, HTTPException
+from models import init_db
+init_db()
 
 
 load_dotenv()
 app = fastapi.FastAPI()
 
 WECHAT_TOKEN = os.getenv("WECHAT_TOKEN")
-
-@app.get('/')
-async def root():
-    return {"message": "Hello World"}
+APP_ID = os.getenv("WECHAT_APP_ID")
+APP_SECRET = os.getenv("WECHAT_APP_SECRET")
 
 
 # 处理微信服务器验证（GET）
@@ -58,8 +62,16 @@ async def get_wx_message(request: Request):
         reply_content = f"你说了：{content}"
     elif msg_type == "image":
         pic_url  = root.findtext("PicUrl")      # 图片 CDN 地址（有效期 3 天）
+        # 组织任务包
+        task_package = {
+            "pic_url": pic_url,
+            "openid": from_user,
+            "domain_name": os.getenv("DOMAIN_NAME")
+        }
+        # 丢队列
+        task = process_image.delay(task_package)   
 
-        reply_content = f"收到图片！\nCDN地址：{pic_url}"
+        reply_content = f"收到图片！小矢正在为你插队转矢量化中，请稍后...\n"
     else:
         reply_content = "暂不支持此类型消息"
 
@@ -74,6 +86,65 @@ async def get_wx_message(request: Request):
     </xml>
     """
     return fastapi.Response(content=reply_xml, media_type="application/xml")
+
+
+import httpx
+from aiocache import cached, Cache
+from aiocache.serializers import JsonSerializer
+@cached(
+    ttl=7000,                     # 官方 7200s，提前 200s 刷新
+    cache=Cache.REDIS,
+    key="wechat_access_token",
+    serializer=JsonSerializer(),
+    endpoint="127.0.0.1", port=6379, db=0
+)
+async def get_access_token() -> str:
+    """
+    如果 Redis 里没有或已过期，则真正去微信服务器拿
+    """
+    url = (
+        "https://api.weixin.qq.com/cgi-bin/token"
+        f"?grant_type=client_credential&appid={APP_ID}&secret={APP_SECRET}"
+    )
+    async with httpx.AsyncClient(timeout=10) as client:
+        resp = await client.get(url)
+        data = resp.json()
+    if "access_token" not in data:
+        raise HTTPException(status_code=502, detail=data)
+    return data["access_token"]
+
+@app.post('/vec_notify/')
+async def vec_notify(request: Request):
+    """
+    接收矢量化结果
+    期望 JSON:
+    {
+      "task_id": "...",
+      "openid": "...",
+      "result": {"url":"https://..."}
+    }
+    """
+    payload = await request.json()
+    openid  = payload.get("openid")
+    result  = payload.get("result", {})
+
+    # 1. 拿 token
+    token = await get_access_token()
+
+    # 2. 发客服文本给用户
+    url = f"https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token={token}"
+    body = {
+        "touser": openid,
+        "msgtype": "text",
+        "text": {"content": f"矢量化完成！下载地址：{result.get('url')}"}
+    }
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.post(url, json=body)
+    return {"status": "ok", "wx_resp": r.json()}
+
+
+
 
 if __name__ == '__main__':
     import uvicorn

@@ -10,8 +10,8 @@ from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 from scipy.optimize import minimize
 import requests
-from algorithm.pngtosvg_v2.superResolution import super_resolution_predict
-SR_MODEL = r"algorithm/pngtosvg_v2/0925-x4_rep_epoch151_x4.pth"
+from superResolution import super_resolution_predict
+SR_MODEL = r"0925-x4_rep_epoch151_x4.pth"
 sr_model = super_resolution_predict(SR_MODEL)
 import cv2.mat_wrapper
 from scipy import stats
@@ -787,23 +787,39 @@ def getlogo(logo_url):
         logo = cv2.normalize(logo, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
     return logo
 
-def bitmap_to_bezier(logo_url):
-    # t1 = time.time()
-    # image = cv2.imread(image_path, -1)
+def bitmap_to_bezier(logo_url): 
+ 
     image = getlogo(logo_url)  
-    is_background,bg_color,image = change_channel(image)
-    image = resize_max(image, max_size=2048)
-    while min(image.shape[0],image.shape[1]) < 300:
-        image = upscale2x(image)
-    binary,image = preprocess_image(image)
-    contours, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    if len(contours) > 1000:
-        svg_content = png2svg_vtracer(image).replace('<!-- Generator: visioncortex VTracer 0.6.4 -->','') 
-        return svg_content
-    
-    all_polygons = extract_contours(contours,image)
-    return bezier_to_svgstr(binary,all_polygons,is_background,bg_color)
-     
+    svg_content = png2svg_vtracer(image).replace('<!-- Generator: visioncortex VTracer 0.6.4 -->','') 
+    return svg_content
+
+        # print(image_path)
+        # t1 = time.time()
+        # image = cv2.imread(image_path, -1)
+        # # image = getlogo(logo_url)  
+        # is_background,bg_color,image = change_channel(image)
+        # image = resize_max(image, max_size=2048)
+        # while min(image.shape[0],image.shape[1]) < 300:
+        #     image = upscale2x(image)
+        # binary,image = preprocess_image(image)
+        # contours, hierarchy = cv2.findContours(binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        # if len(contours) > 1000:
+        #     svg_content = png2svg_vtracer(image).replace('<!-- Generator: visioncortex VTracer 0.6.4 -->','') 
+        #     with open(image_path.replace('png','svg'), 'w') as f:
+        #         f.write(svg_content)
+        
+        # all_polygons = extract_contours(contours,image)
+        # svg_content = bezier_to_svgstr(binary,all_polygons,is_background,bg_color)
+
+        # with open(image_path.replace('png','svg'), 'w') as f:
+        #     f.write(svg_content)
+
+
+
+
+
+
+
     # t2 = time.time()
     # print(f'该图片转换耗时:{t2-t1}')
 # bitmap_to_bezier(r"e:\logo_data\logo2\0.png","output.svg")
