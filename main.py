@@ -13,6 +13,10 @@ from worker import process_image
 import httpx
 from fastapi import Request, HTTPException
 from models import init_db
+# main.py 顶部
+import asyncio
+from menu import create_menu
+
 init_db()
 
 
@@ -23,6 +27,9 @@ WECHAT_TOKEN = os.getenv("WECHAT_TOKEN")
 APP_ID = os.getenv("WECHAT_APP_ID")
 APP_SECRET = os.getenv("WECHAT_APP_SECRET")
 
+@app.on_event("startup")
+async def startup_event():
+    await create_menu()
 
 # 处理微信服务器验证（GET）
 @app.get("/wx-server/msg/")
