@@ -3,12 +3,8 @@ Celery 任务：耗时图片处理
 启动命令：
 celery -A tasks worker --loglevel=info --pool=prefork
 """
-import os
 import uuid
-import logging
-from pathlib import Path
-from pngtosvg_v2.potracemyown import bitmap_to_bezier
-from PIL import Image, ImageDraw, ImageFont
+from vec import bitmap_to_bezier
 from celery import Celery
 import requests
 
@@ -37,7 +33,7 @@ def process_image(self, task_package: str) -> dict:
 
     response = requests.post(
         "http://127.0.0.1:6999/vec_notify/",
-        json={"task_id": self.request.id, "result":{"url": f"{domain_name}/{out_name}"}, "openid": openid},
+        json={"task_id": self.request.id, "result":{"url": f"{domain_name}/{out_name}"}, "openid": openid}, 
         timeout=30
     )
 

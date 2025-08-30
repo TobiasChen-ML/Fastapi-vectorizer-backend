@@ -4,7 +4,6 @@ from fastapi.requests import Request
 import time
 import xml.etree.ElementTree as ET
 from fastapi import FastAPI, Request, Query
-from pydantic import BaseModel
 import os
 import hashlib
 from dotenv import load_dotenv
@@ -18,7 +17,7 @@ init_db()
 
 
 load_dotenv()
-app = fastapi.FastAPI()
+app = FastAPI()
 
 WECHAT_TOKEN = os.getenv("WECHAT_TOKEN")
 APP_ID = os.getenv("WECHAT_APP_ID")
@@ -56,7 +55,6 @@ async def get_wx_message(request: Request):
     from_user = root.find("FromUserName").text
     msg_type = root.find("MsgType").text
 
-    # 示例：文本消息
     if msg_type == "text":
         content = root.find("Content").text
         reply_content = f"你说了：{content}"
@@ -68,7 +66,6 @@ async def get_wx_message(request: Request):
             "openid": from_user,
             "domain_name": os.getenv("DOMAIN_NAME")
         }
-        # 丢队列
         task = process_image.delay(task_package)   
 
         reply_content = f"收到图片！小矢正在为你插队转矢量化中，请稍后...\n"
@@ -143,8 +140,8 @@ async def vec_notify(request: Request):
         r = await client.post(url, json=body)
     return {"status": "ok", "wx_resp": r.json()}
 
-
-
+## 查询数据库等
+ 
 
 if __name__ == '__main__':
     import uvicorn
