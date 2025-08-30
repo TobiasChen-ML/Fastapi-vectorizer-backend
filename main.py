@@ -54,11 +54,16 @@ async def get_wx_message(request: Request):
     to_user = root.find("ToUserName").text
     from_user = root.find("FromUserName").text
     msg_type = root.find("MsgType").text
+    create_time  = int(root.findtext("CreateTime"))
 
-    if msg_type == "text":
+    if msg_type == "text":  # 文字
         content = root.find("Content").text
         reply_content = f"你说了：{content}"
-    elif msg_type == "image":
+    elif msg_type == "subscribe":  # 关注
+        print(f"用户 {from_user} 关注了服务号，时间戳：{create_time}")  
+    elif msg_type == "unsubscribe":  # 取消关注
+        print(f"用户 {from_user} 取消关注了服务号，时间戳：{create_time}")  
+    elif msg_type == "image":  # 图片
         pic_url  = root.findtext("PicUrl")      # 图片 CDN 地址（有效期 3 天）
         # 组织任务包
         task_package = {
@@ -140,7 +145,7 @@ async def vec_notify(request: Request):
         r = await client.post(url, json=body)
     return {"status": "ok", "wx_resp": r.json()}
 
-## 查询数据库等
+
  
 
 if __name__ == '__main__':
