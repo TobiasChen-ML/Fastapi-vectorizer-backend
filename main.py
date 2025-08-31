@@ -15,6 +15,7 @@ from util import *
 from worker import process_image
 import httpx
 from fastapi import Request, HTTPException
+import logging
 from models import init_db
 # main.py 顶部
 # 2. 创建 Redis 连接池（全局复用）
@@ -37,9 +38,14 @@ APP_ID = os.getenv("WECHAT_APP_ID")
 APP_SECRET = os.getenv("WECHAT_APP_SECRET")
 
 
-
-
-
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[
+        logging.FileHandler("app.log"),   # 写文件
+        logging.StreamHandler()          # 继续打终端
+    ]
+)
 
 
 @app.on_event("startup")
@@ -179,7 +185,8 @@ async def send_message(openid: str, result:dict) -> None:
     token = r.get('wx_access_token')
     if not token:
         token = await get_access_token()
-        r.set('wx_access_token',token,ex=7200)
+        logging.info(f"wx access_token refreshed")
+        r.set('wx_access_token',token,ex=7000)
     """
     发送微信客服消息
     """
@@ -239,6 +246,7 @@ async def make_order(request: Request):
     credits = payload.get("credits")
 
     print(f"用户 {openid} 下单 {amount} 元，需要 {credits} 积分")
+    logging.info(f"用户 {openid} 下单 {amount} 元，需要 {credits} 积分")
     if credits == -1:
         # 包月
         s = build_order(openid,amount)
@@ -255,6 +263,7 @@ async def wechat_notify(request:Request):
             # 获取微信支付回调数据
             xml_data = await request.body()
             print('收到支付回调,',xml_data)
+            logging.info('收到支付回调,',xml_data)
             wechat_pay = WechatPayAPI()
             
             # 验证签名
@@ -271,10 +280,13 @@ async def wechat_notify(request:Request):
                 # 新增积分
                 info = get_payment(order_id=data.get('out_trade_no'))
                 amount = float(info.amount)
+                
                 if amount == 0.01:        
                     add_points(openid, delta=20)
+                    logging.info(f"用户 {openid} 充值 {amount} 元, 增加20积分")
                 elif amount == 19.99:
                     add_points(openid, delta=100)
+                    logging.info(f"用户 {openid} 充值 {amount} 元, 增加100积分")
                 # # 1. 拿 token
                 # token = await get_access_token()
 
@@ -322,6 +334,23 @@ async def get_order_status(orderNo: str = Path(..., description="订单号")):
         return JSONResponse({
         }, status_code=404) 
 
+@app.get("/logs", response_class=PlainTextResponse)
+def show_logs(lines: int = 200):
+    """
+    lines: 返回最后多少行，默认 200 行
+    """
+    LOG_FILE = "app.log"
+    if not os.path.exists(LOG_FILE):
+        return "日志文件不存在，稍等或先产生一些日志。"
+
+    # 用 tail 的思想读最后 N 行，防止大文件一次性读爆内存
+    from collections import deque
+    with open(LOG_FILE, "rb") as f:
+        # 倒序读，最多取 lines 行
+        last_lines = deque(f, maxlen=lines)
+    # bytes -> str
+    last_lines = [line.decode(errors="ignore") for line in last_lines]
+    return "".join(last_lines)
 
 if __name__ == '__main__':
     import uvicorn
