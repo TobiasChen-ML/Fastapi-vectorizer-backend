@@ -27,7 +27,7 @@ def process_image(self, task_package: str) -> dict:
     svg_content = bitmap_to_bezier(pic_url)
 
     # 保存结果
-    out_name = f"static/{openid}_{str(uuid.uuid4())[:8]}.svg"
+    out_name = f"static/{str(uuid.uuid4())}.svg"
     with open(out_name, "w") as f:
         f.write(svg_content)
 

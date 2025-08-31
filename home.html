@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>位图转矢量</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            width: 100%;
+            padding: 60px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 40px;
+            font-weight: 600;
+        }
+
+        .welcome-text {
+            font-size: 20px;
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 50px;
+            text-align: left;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .image-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .image-box {
+            background: #f0f0f0;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .image-box:hover {
+            transform: translateY(-5px);
+        }
+
+        .placeholder-image {
+            width: 500px;
+            height: 500px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .image-label {
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .qr-section {
+            margin-top: 50px;
+            padding: 40px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 20px;
+        }
+
+        .qr-placeholder {
+            width: 200px;
+            height: 200px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 15px;
+            margin: 30px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 16px;
+        }
+
+        .cta-text {
+            font-size: 24px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 30px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .welcome-text {
+                font-size: 16px;
+            }
+            
+            .image-container {
+                gap: 20px;
+            }
+            
+            .placeholder-image {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>位图转矢量转移至微信公众号通知</h1>
+        
+        <div class="welcome-text">
+            各位用户你们好，<br>
+            自<span class="highlight">九月一日起</span>，位图转矢量服务号将可完成转矢量功能。只要将图片发送给服务号，稍等片刻，即可完成转矢量任务。<br>
+            
+        </div>
+
+        <div class="image-container">
+            <div class="image-box">
+                <div class="placeholder-image">
+                    <span>关注公众号后发送图片<img width="100%" src="static/wechat_2025-08-31_204407_428.jpg"></img></span>
+                </div>
+                <div class="image-label">原始位图</div>
+            </div>
+            
+            <div class="image-box">
+                <div class="placeholder-image">
+                    <span>打开完成的矢量图并保存<img width="100%" src="static/wechat_2025-08-31_204955_134.jpg"></img></span>
+                </div>
+                <div class="image-label">矢量图</div>
+            </div>
+        </div>
+
+        <div class="qr-section">
+            <div class="cta-text">
+                扫码关注服务号即可完成你的矢量化任务
+            </div>
+            <div class="qr-placeholder">
+                <span>服务号二维码<img width="100%" src="https://vectorizer.cn/static/qrcode_for_gh_889fde3766af_344.jpg"></img></span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

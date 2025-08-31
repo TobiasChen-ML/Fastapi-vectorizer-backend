@@ -1,6 +1,8 @@
 import requests
 import os
 import json
+
+
 def get_access_token():
     """
     获取微信公众号 access_token
@@ -38,29 +40,31 @@ from models import Payment, engine
 from decimal import Decimal
 from typing import List, Optional
 
-def create_payment(user_id: str, amount: Decimal, currency="CNY", status="pending") -> Payment:
+def create_payment(user_id: str, amount: Decimal, order_id: str, currency="CNY", status="pending") -> Payment:
     with Session(engine) as s:
-        p = Payment(user_id=user_id, amount=amount, currency=currency, status=status)
+        p = Payment(user_id=user_id, amount=amount, currency=currency, status=status, order_id=order_id)
         s.add(p)
         s.commit()
         s.refresh(p)
         return p
 
-def get_payment(pay_id: int) -> Optional[Payment]:
+def get_payment(order_id: str) -> Optional[Payment]:
     with Session(engine) as s:
-        return s.get(Payment, pay_id)
+        return s.exec(select(Payment).where(Payment.order_id == order_id)).first()
 
 def list_payments(user_id: str) -> List[Payment]:
     with Session(engine) as s:
         return s.exec(select(Payment).where(Payment.user_id == user_id)).all()
 
-def update_payment(pay_id: int, **kwargs) -> Optional[Payment]:
+
+def update_payment_by_order_id(order_id: str, **kwargs) -> Optional[Payment]:
     with Session(engine) as s:
-        p = s.get(Payment, pay_id)
+        p = s.exec(select(Payment).where(Payment.order_id == order_id)).first()
         if not p:
             return None
         for k, v in kwargs.items():
             setattr(p, k, v)
+        s.add(p)
         s.commit()
         s.refresh(p)
         return p
