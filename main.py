@@ -21,7 +21,7 @@ from models import init_db
 # 2. 创建 Redis 连接池（全局复用）
 from pydantic import BaseModel
 import redis.asyncio as redis
-r = redis.Redis(host="127.0.0.1", port=6379, db=0, decode_responses=True)
+
 
 from pay import *
 from menu import create_menu,delete_menu
@@ -47,11 +47,13 @@ logging.basicConfig(
     ]
 )
 
-
+from fastapi_cache.backends.redis import RedisBackend
 @app.on_event("startup")
 async def startup_event():
     await delete_menu()
     await create_menu()
+    redis = aioredis.from_url("redis://127.0.0.1:6379", db=0)
+    FastAPICache.init(RedisBackend(redis), prefix="fc")
 
 # 处理微信服务器验证（GET）
 @app.get("/wx-server/msg/")
@@ -116,8 +118,24 @@ async def get_wx_message(request: Request):
         if not user_create_time:  # 关注很久但第一次用
             create_or_set_points(from_user, 5)
             reply_content = f"欢迎使用位图转矢量工具，请把图片发给我，我会帮你转矢量！\n转1张图消耗1积分，老用户赠送您5积分，您剩余{get_points(from_user)}积分。"
+        
+        media_id = root.findtext("MediaId") 
+        token = await get_access_token()
+        url = f"https://api.weixin.qq.com/cgi-bin/media/get?access_token={token}&media_id={media_id}"
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
 
-        pic_url  = root.findtext("PicUrl")      # 图片 CDN 地址（有效期 3 天）
+            # 微信返回头里会带文件名：Content-Disposition: attachment; filename="xxx.jpg"
+            filename = resp.headers.get("Content-Disposition", "").split("filename=")[-1].strip('"')
+            if not filename:
+                filename = f"{media_id}.png"
+
+            local_path = r"static/"+filename
+            with open(local_path, "wb") as f:
+                f.write(resp.content)
+        pic_url  =  os.getenv('DOMAIN_NAME') + "/"+local_path
+        print(pic_url)
         # 组织任务包
         task_package = {
             "pic_url": pic_url,
@@ -148,23 +166,16 @@ async def get_wx_message(request: Request):
     """
     return fastapi.Response(content=reply_xml, media_type="application/xml")
 
+from redis import asyncio as aioredis
+from fastapi_cache import FastAPICache
 
 import httpx
 from aiocache import cached, Cache
 from aiocache.serializers import JsonSerializer
 from tenacity import retry, stop_after_attempt, wait_fixed
-@cached(
-    ttl=7000,                     # 官方 7200s，提前 200s 刷新
-    cache=Cache.REDIS,
-    key="wechat_access_token",
-    serializer=JsonSerializer(),
-    endpoint="127.0.0.1", port=6379, db=0
-)
-
+from fastapi_cache.decorator import cache
+@cache(expire=7000, namespace="wechat_access_token")
 async def get_access_token() -> str:
-    """
-    如果 Redis 里没有或已过期，则真正去微信服务器拿
-    """
     url = (
         "https://api.weixin.qq.com/cgi-bin/token"
         f"?grant_type=client_credential&appid={APP_ID}&secret={APP_SECRET}"
@@ -174,46 +185,32 @@ async def get_access_token() -> str:
         data = resp.json()
     if "access_token" not in data:
         raise HTTPException(status_code=502, detail=data)
-    # 存到redis里  
     return data["access_token"]
 
-
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
-async def send_message(openid: str, result:dict) -> None:
-
-    
-    token = r.get('wx_access_token')
-    if not token:
-        token = await get_access_token()
-        logging.info(f"wx access_token refreshed")
-        r.set('wx_access_token',token,ex=7000)
-    """
-    发送微信客服消息
-    """
-    # 2. 发客服文本给用户
+async def send_message(openid: str, result: dict):
+    token = await get_access_token()
     url = f"https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token={token}"
     body = {
         "touser": openid,
         "msgtype": "text",
-        "text": {"content": f"矢量化完成！请复制到浏览器打开并右键保存：\n{result.get('url')}"}
+        "text": {
+            "content": f"矢量化完成！请复制到浏览器打开并右键保存：\n{result.get('url')}"
+        }
     }
 
     async with httpx.AsyncClient(timeout=10) as client:
         r = await client.post(url, json=body)
-        if r["error_code"]== 40001:
-            # 微信 access_token 过期，重新获取
-            token = await get_access_token()
-            raise Exception("access_token expired")
-        else:
-            r.set('wx_access_token',token,ex=7200)
-    return True
+        r.raise_for_status()
+        return {"openid": openid, "resp": r.json()}
 
 @app.post('/vec_notify/')
 async def vec_notify(request: Request):
     payload = await request.json()
     openid  = payload.get("openid")
     result  = payload.get("result", {})
-    return await send_message(openid,result)
+    await send_message(openid,result)
+    return fastapi.Response(status_code=200)
     
 
 @app.post('/get_openid/')

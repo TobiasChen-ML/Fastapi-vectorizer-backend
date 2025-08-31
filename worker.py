@@ -15,8 +15,6 @@ celery_app = Celery(
     backend="redis://127.0.0.1:6379/0",
 )
 
-
-
 @celery_app.task(bind=True, name="tasks.process_image")
 def process_image(self, task_package: str) -> dict:
     self.update_state(state="PROCESSING")  # 非必需，方便前端轮询
