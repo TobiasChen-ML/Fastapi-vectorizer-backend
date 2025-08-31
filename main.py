@@ -16,7 +16,7 @@ from models import init_db
 # main.py 顶部
 import asyncio
 from menu import create_menu
-
+from datetime import datetime, timezone
 init_db()
 
 
@@ -66,11 +66,24 @@ async def get_wx_message(request: Request):
     if msg_type == "text":  # 文字
         content = root.find("Content").text
         reply_content = f"你说了：{content}"
+
+
     elif msg_type == "event":  # 关注
         event = root.findtext("Event")
         if event == "subscribe":
             print("用户关注")
-            reply_content = f"欢迎使用位图转矢量工具，请把图片发给我，我会帮你转矢量！\n"
+            # 注册用户，或更新用户信息
+            user_info = get_points(from_user)
+            if not user_info:
+                create_or_set_points(from_user, 5)
+                reply_content = f"欢迎使用位图转矢量工具，请把图片发给我，我会帮你转矢量！\n转1张图消耗1积分，赠送您5积分，您剩余{get_points(from_user)}积分。"
+            else:
+                # 如果是很久之前关注的用户，则送积分，否则不送
+                if (datetime.now(timezone.utc) - user_info.updated_at).days > 30:
+                    add_points(from_user, 5)
+                    reply_content = f"欢迎回来，\n老用户赠送5积分，您剩余{get_points(from_user)}积分。"
+                else:
+                    reply_content = f"欢迎回来，\n您剩余{get_points(from_user)}积分。"
         elif event == "unsubscribe":
             print("用户取消关注")
             reply_content = f"再见！要记住我哦！你还会回来的吧？\n"
