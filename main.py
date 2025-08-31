@@ -16,7 +16,7 @@ from models import init_db
 # main.py 顶部
 import asyncio
 from menu import create_menu
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 init_db()
 
 
@@ -56,7 +56,7 @@ async def get_wx_message(request: Request):
     """
     xml_data = await request.body()
     root = ET.fromstring(xml_data)
-
+    reply_content = ""
     # 解析 XML
     to_user = root.find("ToUserName").text
     from_user = root.find("FromUserName").text
@@ -65,21 +65,25 @@ async def get_wx_message(request: Request):
     print(f"收到来自 {from_user} 的 {msg_type} 消息，时间戳：{create_time}")
     if msg_type == "text":  # 文字
         content = root.find("Content").text
-        reply_content = f"你说了：{content}"
-
-
+        # reply_content = f"你说了：{content}"
+        if "充值" in content or "积分" in content:
+            reply_content = f"请点击菜单栏【充值积分】进行充值。\n或点击以下链接进行充值：https://vectorizer.cn/pay/"
+        else:
+            reply_content = "暂时我还不理解您的意思，稍后人工回复给您解答。"
     elif msg_type == "event":  # 关注
         event = root.findtext("Event")
         if event == "subscribe":
             print("用户关注")
             # 注册用户，或更新用户信息
-            user_info = get_points(from_user)
-            if not user_info:
+            user_create_time = get_creat_time(from_user)
+            
+            if not user_create_time:
                 create_or_set_points(from_user, 5)
                 reply_content = f"欢迎使用位图转矢量工具，请把图片发给我，我会帮你转矢量！\n转1张图消耗1积分，赠送您5积分，您剩余{get_points(from_user)}积分。"
             else:
                 # 如果是很久之前关注的用户，则送积分，否则不送
-                if (datetime.now(timezone.utc) - user_info.updated_at).days > 30:
+                cutoff = datetime.now(timezone.utc) - timedelta(days=30)
+                if user_create_time.replace(tzinfo=timezone.utc) < cutoff:
                     add_points(from_user, 5)
                     reply_content = f"欢迎回来，\n老用户赠送5积分，您剩余{get_points(from_user)}积分。"
                 else:

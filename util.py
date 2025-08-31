@@ -86,7 +86,12 @@ def create_or_set_points(user_id: str, points: int) -> Points:
         s.commit()
         s.refresh(rec)
         return rec
-
+    
+def get_creat_time(user_id: str) -> Optional[int]:
+    with Session(engine) as s:
+        rec = s.get(Points, user_id)
+        return rec.updated_at if rec else None
+    
 def get_points(user_id: str) -> Optional[int]:
     with Session(engine) as s:
         rec = s.get(Points, user_id)

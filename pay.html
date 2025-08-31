@@ -1,12 +1,8 @@
 <div class="container">
-    <header class="header">
-        <h1>位图转矢量额度充值中心</h1>
-    </header>
-
     <main class="main">
         <!-- 这里放原 .card 及其内部所有内容 -->
         <div class="card">
-            <h2 class="card-title">积分充值</h2>
+            <h2 class="card-title">位图转矢量额度充值</h2>
             <div class="row">
                 <!-- 原充值三卡片，已自动垂直排列 -->
                 <div class="pricing-card">
@@ -24,8 +20,6 @@
             </div>
         </div>
     </main>
-
-    <footer class="footer"></footer>
 </div>
 <!-- 支付二维码弹窗 -->
 <div class="modal fade" id="payModal" tabindex="-1">
@@ -163,25 +157,9 @@ html,body{
 }
 
 .container{
-    height:100%;
+    width:100%;
     display:flex;
     flex-direction:column;
-}
-
-/* === 上：标题 === */
-.header{
-    flex:0 0 18%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:1rem;
-}
-.header h1{
-    font-size:2rem;
-    font-weight:700;
-    color:#fff;
-    text-shadow:0 2px 4px rgba(0,0,0,.2);
-    text-align:center;
 }
 
 /* === 中：卡片内容 === */
@@ -190,7 +168,6 @@ html,body{
     display:flex;
     align-items:center;
     justify-content:center;
-    padding:0 1rem 1rem;
 }
 .card{
     width:100%;
@@ -236,8 +213,5 @@ html,body{
     font-weight:600;
 }
 
-/* === 下：按钮占位 === */
-.footer{
-    flex:0 0 10%;
-}
+
 </style>

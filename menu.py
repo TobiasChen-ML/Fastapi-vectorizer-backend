@@ -6,8 +6,8 @@ MENU = {
     "button": [
         {
             "type": "view",
-            "name": "立即购买",
-            "url": "https://vectorizer.cn/pay/"        # 你的 H5 购买页
+            "name": "充值积分",
+            "url": "https://vectorizer.cn/pay/"        
         }
     ]
 }
