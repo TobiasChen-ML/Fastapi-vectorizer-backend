@@ -95,9 +95,15 @@ async def get_wx_message(request: Request):
             "openid": from_user,
             "domain_name": os.getenv("DOMAIN_NAME")
         }
-        task = process_image.delay(task_package)   
+        # 如果积分不够，则不处理
+        if get_points(from_user) < 1:
+            reply_content = f"您的积分不足，请充值后再试。\n"
+        else:
+            # 扣1积分
+            add_points(from_user, -1)
+            task = process_image.delay(task_package)   
 
-        reply_content = f"收到图片！小矢正在为你插队转矢量化中，请稍后...\n"
+            reply_content = f"收到图片！小矢正在为你转矢量化中，请稍后...\n目前，您剩余{get_points(from_user)}积分。"
     else:
         reply_content = "暂不支持此类型消息"
 
@@ -162,7 +168,7 @@ async def vec_notify(request: Request):
     body = {
         "touser": openid,
         "msgtype": "text",
-        "text": {"content": f"矢量化完成！下载地址：{result.get('url')}"}
+        "text": {"content": f"矢量化完成！请复制到浏览器打开并右键保存：{result.get('url')}"}
     }
 
     async with httpx.AsyncClient(timeout=10) as client:
