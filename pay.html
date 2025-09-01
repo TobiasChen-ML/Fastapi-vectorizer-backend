@@ -169,6 +169,34 @@ document.querySelectorAll('.recharge-btn').forEach(btn => {
 .modal-backdrop {
     background: rgba(0, 0, 0, .45);
 }
+/* 遮罩层背景 */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.45);   /*半透明黑色遮罩*/
+}
+
+/* 弹窗主体：宽度 80%，水平垂直居中 */
+.modal-dialog {
+    width: 80%;
+    max-width: 500px;    /* 可选：防止在大屏上过宽 */
+    margin: 0;
+    z-index: 10000;      /* 确保在遮罩之上 */
+}
+
+/* 内容区样式（保持原有圆角、背景等即可） */
+.modal-content {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
 html,body{
     height:100%;
     margin:0;
@@ -193,13 +221,21 @@ html,body{
 }
 .card{
     width:100%;
-    max-width:420px;
-    padding:2rem 1.5rem;
+    /* max-width:420px;  ← 去掉这一行 */
+    padding:2rem 0;     /* 左右 padding 设为 0，上下保持 2rem */
     background:#ffffffee;
-    border-radius:20px;
-    box-shadow:0 8px 30px rgba(0,0,0,.12);
+    border-radius:0;    /* 如果希望完全贴边，可把圆角也去掉 */
+    box-shadow:none;    /* 大屏时阴影可去掉，看起来更简洁 */
     backdrop-filter:blur(10px);
     text-align:center;
+}
+
+/* 2. 让里面的 pricing-card 也撑满，并加一点点左右边距防止贴边 */
+.row{
+    display:flex;
+    flex-direction:column;
+    gap:1.2rem;
+    padding:0 1rem;    /* 给最外层一个 1rem 的左右安全边距 */
 }
 .card-title{
     font-size:1.6rem;
@@ -207,12 +243,7 @@ html,body{
     color:var(--brand);
 }
 
-/* 三列 → 垂直排列 */
-.row{
-    display:flex;
-    flex-direction:column;
-    gap:1.2rem;
-}
+
 .pricing-card{
     background:linear-gradient(135deg,var(--brand-light) 0%,var(--brand) 100%);
     color:#fff;
