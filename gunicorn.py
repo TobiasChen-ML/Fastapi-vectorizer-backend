@@ -1,0 +1,11 @@
+bind = "127.0.0.1:6999"
+workers = 2
+threads = 4
+backlog = 2048
+worker_class = "uvicorn.workers.UvicornWorker"
+worker_connections = 1000
+daemon = True
+timeout = 24000
+pidfile = 'log/gunicorn.pid'
+accesslog = 'log/access.log'
+errorlog = 'log/gunicorn.log'

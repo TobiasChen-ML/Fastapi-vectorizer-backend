@@ -104,7 +104,7 @@ function rechargeCustom() {
 function showPayQRCode(codeUrl, orderNo, amount) {
 
     // 显示支付弹窗
-    document.getElementById('payModal').style.display = 'block';
+    document.getElementById('payModal').style.display = 'flex';
     // 更新弹窗内容
     document.getElementById('orderNo').innerHTML = orderNo + ' ' + amount + '元';
     // 清空之前的二维码
@@ -169,8 +169,8 @@ document.querySelectorAll('.recharge-btn').forEach(btn => {
 }
 
 #payModal .modal-dialog{
-    width:90%;
-    max-width:320px;
+    width:100%;
+    height: auto; 
     background:#fff;
     border-radius:16px;
     overflow:hidden;
@@ -210,8 +210,8 @@ document.querySelectorAll('.recharge-btn').forEach(btn => {
 }
 #qrcode{
     display:block;          /* 让二维码独占一行，居中 */
-    width:200px;
-    height:200px;
+    width:70%;
+    height:auto;
     margin:0 auto;          /* 水平居中 */
     border:1px solid #f2f2f2;
     border-radius:8px;

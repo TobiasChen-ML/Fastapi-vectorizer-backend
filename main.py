@@ -349,6 +349,7 @@ def show_logs(lines: int = 200):
     last_lines = [line.decode(errors="ignore") for line in last_lines]
     return "".join(last_lines)
 
+
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host='0.0.0.0', port=8999)

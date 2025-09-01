@@ -14,3 +14,4 @@ Deploy once, and users can chat an image to your service, pay for credits, and r
 
 
 ## Usage
+gunicorn -c gunicorn.py -k uvicorn.workers.UvicornH11Worker  main:app --daemon
