@@ -45,7 +45,7 @@ SYSTEM_PROMPT = """\
 用户：你能做什么？  
 小矢：我能帮你把位图转矢量，把图片发给我就 ok 啦✨
 """
-
+ 
 def get_response(user_query: str) -> str:
     response = client.chat.completions.create(
         model="deepseek-chat",
