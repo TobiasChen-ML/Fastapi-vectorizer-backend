@@ -47,13 +47,40 @@ logging.basicConfig(
     ]
 )
 
+
+
+KEY_DATE = 'free_date'
+KEY_COUNT = 'counter'
+r: Optional[aioredis.Redis] = None
+
 from fastapi_cache.backends.redis import RedisBackend
 @app.on_event("startup")
 async def startup_event():
     await delete_menu()
     await create_menu()
-    redis = aioredis.from_url("redis://127.0.0.1:6379", db=0)
-    FastAPICache.init(RedisBackend(redis), prefix="fc")
+    global r
+    r = aioredis.from_url("redis://127.0.0.1:6379", db=0)   
+    FastAPICache.init(RedisBackend(r), prefix="fc")
+
+async def get_counter():
+    """
+    返回今天已用的 counter，如果跨天则自动清零。
+    返回值：当前 counter
+    """
+    TODAY = datetime.datetime.now().strftime('%Y-%m-%d')
+    # 取出上次记录的日期
+    last_date = await r.get(KEY_DATE)
+
+    if last_date == TODAY:
+        # 同一天，直接自增并返回
+        return await r.incr(KEY_COUNT)
+    else:
+        # 跨天了：事务性更新
+        async with r.pipeline(transaction=True) as pipe:
+            await pipe.set(KEY_DATE, TODAY)
+            await pipe.set(KEY_COUNT, 1)
+            await pipe.execute()
+        return 1
 
 # 处理微信服务器验证（GET）
 @app.get("/wx-server/msg/")
@@ -71,6 +98,7 @@ async def wechat_verify(
     if hash_str == signature:
         return int(echostr)
     return "fail"
+
 
 
 @app.post('/wx-server/msg/')
@@ -146,8 +174,12 @@ async def get_wx_message(request: Request):
         if get_points(from_user) < 1:
             reply_content = f"您的积分不足，请充值后再试。\n"
         else:
-            # 扣1积分
-            add_points(from_user, -1)
+            cc = await get_counter()
+            if cc > 200: # 当日免费积分用完
+                add_points(from_user, -1)
+                reply_content = f"今天免费额度已用完。0/200张。\n"
+            else:
+                reply_content = f"今天免费额度剩余{200-cc}/200张。\n"
             task = process_image.delay(task_package)   
 
             reply_content += f"收到图片！小矢正在为你转矢量化中，请稍后...\n目前，您剩余{get_points(from_user)}积分。"
@@ -188,14 +220,14 @@ async def get_access_token() -> str:
     return data["access_token"]
 
 @retry(stop=stop_after_attempt(3), wait=wait_fixed(1))
-async def send_message(openid: str, result: dict):
+async def send_message(openid: str, result: dict, content="矢量化完成！请复制到浏览器打开并右键保存："):
     token = await get_access_token()
     url = f"https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token={token}"
     body = {
         "touser": openid,
         "msgtype": "text",
         "text": {
-            "content": f"矢量化完成！请复制到浏览器打开并右键保存：\n{result.get('url')}"
+            "content": content + f"\n{result.get('url')}"
         }
     }
 
@@ -204,14 +236,31 @@ async def send_message(openid: str, result: dict):
         r.raise_for_status()
         return {"openid": openid, "resp": r.json()}
 
+is_send = []
 @app.post('/vec_notify/')
 async def vec_notify(request: Request):
     payload = await request.json()
     openid  = payload.get("openid")
     result  = payload.get("result", {})
     await send_message(openid,result)
+    if openid not in is_send:
+        await send_message(openid,{"url":""},"“您打算把这张矢量图用在哪儿？\n例如：印刷海报 / PPT / 网站 / App 界面 / 其他——方便的话请简单描述下场景，我好给您最合适的格式或尺寸建议。”")
+        is_send.append(openid)
+        if len(is_send) > 500:
+            is_send = []
     return fastapi.Response(status_code=200)
-    
+
+
+@app.post('/add_points/')
+async def add_points_api(request: Request):
+    payload = await request.json()
+    openid  = payload.get("openid")
+    add_points(openid, delta=1)
+    return {'status':1}
+
+
+
+
 
 @app.post('/get_openid/')
 async def get_openid(request: Request):
@@ -284,21 +333,21 @@ async def wechat_notify(request:Request):
                 elif amount == 19.99:
                     add_points(openid, delta=100)
                     logging.info(f"用户 {openid} 充值 {amount} 元, 增加100积分")
-                # # 1. 拿 token
-                # token = await get_access_token()
+                # 1. 拿 token
+                token = await get_access_token()
 
-                # # 2. 发客服文本给用户
-                # url = f"https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token={token}"
-                # body = {
-                #     "touser": openid,
-                #     "msgtype": "text",
-                #     "text": {"content": f"充值成功，您剩余{get_points(openid)}积分。"}
-                # }
+                # 2. 发客服文本给用户
+                url = f"https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token={token}"
+                body = {
+                    "touser": openid,
+                    "msgtype": "text",
+                    "text": {"content": f"充值成功，您剩余{get_points(openid)}积分。"}
+                }
 
-                # async with httpx.AsyncClient(timeout=10) as client:
-                #     r = await client.post(url, json=body)
-                # 对报文进行应答
-                # return fastapi.Response(status_code=200)
+                async with httpx.AsyncClient(timeout=10) as client:
+                    r = await client.post(url, json=body)
+                #对报文进行应答
+ 
                 return PlainTextResponse(
                     content="<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>",
                     media_type="text/xml"
@@ -331,7 +380,7 @@ async def get_order_status(orderNo: str = Path(..., description="订单号")):
         return JSONResponse({
         }, status_code=404) 
 
-@app.get("/logs", response_class=PlainTextResponse)
+@app.get("/logs_all/", response_class=PlainTextResponse)
 def show_logs(lines: int = 200):
     """
     lines: 返回最后多少行，默认 200 行

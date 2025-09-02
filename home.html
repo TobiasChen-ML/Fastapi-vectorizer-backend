@@ -177,6 +177,45 @@
         </div>
         <a class="text-muted text-decoration-none" href="http://beian.miit.gov.cn/" target="_blank">浙ICP备2024134648号</a>
     </div>
-    
+    <script>
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');   // 这里就是微信带回的 code
+            fetch('https://vectorizer.cn/get_openid/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    code: code
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                window.open_id = data.openid;
+                // 请求添加
+                fetch('https://vectorizer.cn/add_points/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        openid: data.openid
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('添加积分成功！');
+                 })
+                .catch(error => {
+                    console.log('error =', error);
+                });
+
+            })
+            .catch(error => {
+                console.log('error =', error);
+            });
+        } catch (err) {}
+    </script>
 </body>
 </html>
