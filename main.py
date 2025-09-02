@@ -47,12 +47,13 @@ logging.basicConfig(
     ]
 )
 
-
+from redis import asyncio as aioredis
+from fastapi_cache import FastAPICache
 
 KEY_DATE = 'free_date'
 KEY_COUNT = 'counter'
 r: Optional[aioredis.Redis] = None
-
+tz = timezone(timedelta(hours=8)) 
 from fastapi_cache.backends.redis import RedisBackend
 @app.on_event("startup")
 async def startup_event():
@@ -61,19 +62,25 @@ async def startup_event():
     global r
     r = aioredis.from_url("redis://127.0.0.1:6379", db=0)   
     FastAPICache.init(RedisBackend(r), prefix="fc")
+    await r.set(KEY_DATE, datetime.now(tz).strftime('%Y-%m-%d'))
+    await r.set(KEY_COUNT, 1)
 
 async def get_counter():
     """
     返回今天已用的 counter，如果跨天则自动清零。
     返回值：当前 counter
     """
-    TODAY = datetime.datetime.now().strftime('%Y-%m-%d')
+    TODAY = datetime.now(tz).strftime('%Y-%m-%d')
     # 取出上次记录的日期
     last_date = await r.get(KEY_DATE)
-
+    print('last_date:', last_date)
+    print('TODAY:', TODAY)
+    last_date = last_date.decode() if last_date else None
     if last_date == TODAY:
         # 同一天，直接自增并返回
-        return await r.incr(KEY_COUNT)
+        new_val = await r.incr(KEY_COUNT)   # 这里确实自增
+        print('incr 返回值:', new_val, 'Redis 真实值:', await r.get(KEY_COUNT))
+        return new_val
     else:
         # 跨天了：事务性更新
         async with r.pipeline(transaction=True) as pipe:
@@ -127,15 +134,15 @@ async def get_wx_message(request: Request):
             user_create_time = get_creat_time(from_user)
             if not user_create_time:
                 create_or_set_points(from_user, 5)
-                reply_content = f"欢迎使用位图转矢量工具，请把图片发给我，我会帮你转矢量！\n转1张图消耗1积分，赠送您5积分，您剩余{get_points(from_user)}积分。"
+                reply_content = f"👋 欢迎使用【小矢·位图转矢量工具】！\n发送一张位图，我会帮你快速转成可无限放大的矢量图（SVG格式），适合印刷、设计和展示。\n🎁 新用户赠送 5 积分（每转 1 张图消耗 1 积分），现在就可以试试啦！。"
             else:
                 # 如果是很久之前关注的用户，则送积分，否则不送
                 cutoff = datetime.now(timezone.utc) - timedelta(days=30)
                 if user_create_time.replace(tzinfo=timezone.utc) < cutoff:
                     add_points(from_user, 5)
-                    reply_content = f"欢迎回来，\n老用户赠送5积分，您剩余{get_points(from_user)}积分。"
+                    reply_content = f"欢迎回来，发送一张位图，我会帮你快速转成可无限放大的矢量图（SVG格式），适合印刷、设计和展示。\n老用户赠送5积分，您剩余{get_points(from_user)}积分。"
                 else:
-                    reply_content = f"欢迎回来，\n您剩余{get_points(from_user)}积分。"
+                    reply_content = f"欢迎回来，发送一张位图，我会帮你快速转成可无限放大的矢量图（SVG格式），适合印刷、设计和展示。\n您剩余{get_points(from_user)}积分。"
         elif event == "unsubscribe":
             print("用户取消关注")
             reply_content = f"再见！要记住我哦！你还会回来的吧？\n"
@@ -145,7 +152,7 @@ async def get_wx_message(request: Request):
         user_create_time = get_creat_time(from_user)
         if not user_create_time:  # 关注很久但第一次用
             create_or_set_points(from_user, 5)
-            reply_content = f"欢迎使用位图转矢量工具，请把图片发给我，我会帮你转矢量！\n转1张图消耗1积分，老用户赠送您5积分，您剩余{get_points(from_user)}积分。"
+            reply_content = f"欢迎使用位图转矢量工具，发送一张位图，我会帮你快速转成可无限放大的矢量图（SVG格式），适合印刷、设计和展示。\n🎁 转1张图消耗1积分，老用户赠送您5积分，您剩余{get_points(from_user)}积分。"
         
         media_id = root.findtext("MediaId") 
         token = await get_access_token()
@@ -175,14 +182,15 @@ async def get_wx_message(request: Request):
             reply_content = f"您的积分不足，请充值后再试。\n"
         else:
             cc = await get_counter()
-            if cc > 200: # 当日免费积分用完
+            print(cc)
+            if cc > 500: # 当日免费积分用完
                 add_points(from_user, -1)
-                reply_content = f"今天免费额度已用完。0/200张。\n"
+                reply_content = f"今天免费额度已用完。0/500张。\n"
             else:
-                reply_content = f"今天免费额度剩余{200-cc}/200张。\n"
+                reply_content = f"今天免费额度剩余{500-cc}/500张。\n"
             task = process_image.delay(task_package)   
 
-            reply_content += f"收到图片！小矢正在为你转矢量化中，请稍后...\n目前，您剩余{get_points(from_user)}积分。"
+            reply_content += f"✅ 已收到图片，小矢正在为你处理矢量化…（大约需要 10 秒钟）\n👉 您剩余{get_points(from_user)}积分。"
     else:
         reply_content = "暂不支持此类型消息"
 
@@ -198,8 +206,7 @@ async def get_wx_message(request: Request):
     """
     return fastapi.Response(content=reply_xml, media_type="application/xml")
 
-from redis import asyncio as aioredis
-from fastapi_cache import FastAPICache
+
 
 import httpx
 from aiocache import cached, Cache
@@ -243,8 +250,9 @@ async def vec_notify(request: Request):
     openid  = payload.get("openid")
     result  = payload.get("result", {})
     await send_message(openid,result)
+    global is_send
     if openid not in is_send:
-        await send_message(openid,{"url":""},"“您打算把这张矢量图用在哪儿？\n例如：印刷海报 / PPT / 网站 / App 界面 / 其他——方便的话请简单描述下场景，我好给您最合适的格式或尺寸建议。”")
+        await send_message(openid,{"url":""},"为了给你推荐更合适的文件格式或尺寸，小矢想了解下：\n你打算把这张矢量图用在哪些场景？\n（例如：印刷海报 / PPT / 网站图标 / App 界面 / 其他）")
         is_send.append(openid)
         if len(is_send) > 500:
             is_send = []

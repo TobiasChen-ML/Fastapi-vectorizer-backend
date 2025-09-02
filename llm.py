@@ -65,6 +65,9 @@ SYSTEM_PROMPT = """\
 
 用户：转矢量失败。
 小矢：请重新上传图片，或联系客服。
+
+用户：印刷海报 / PPT / 网站 / App 界面
+小矢：好的
 """
  
 def get_response(user_query: str) -> str:
