@@ -182,12 +182,12 @@ async def get_wx_message(request: Request):
             reply_content = f"您的积分不足，请充值后再试。\n"
         else:
             cc = await get_counter()
-            print(cc)
-            if cc > 500: # 当日免费积分用完
+
+            if cc > 100: # 当日免费积分用完
                 add_points(from_user, -1)
-                reply_content = f"今天免费额度已用完。0/500张。\n"
+                reply_content = f"今天免费额度已用完。0/100张。\n"
             else:
-                reply_content = f"今天免费额度剩余{500-cc}/500张。\n"
+                reply_content = f"今天免费额度剩余{100-cc}/100张。\n"
             task = process_image.delay(task_package)   
 
             reply_content += f"✅ 已收到图片，小矢正在为你处理矢量化…（大约需要 10 秒钟）\n👉 您剩余{get_points(from_user)}积分。"
@@ -254,7 +254,7 @@ async def vec_notify(request: Request):
     if openid not in is_send:
         await send_message(openid,{"url":""},"为了给你推荐更合适的文件格式或尺寸，小矢想了解下：\n你打算把这张矢量图用在哪些场景？\n（例如：印刷海报 / PPT / 网站图标 / App 界面 / 其他）")
         is_send.append(openid)
-        if len(is_send) > 500:
+        if len(is_send) > 50:
             is_send = []
     return fastapi.Response(status_code=200)
 
@@ -265,9 +265,6 @@ async def add_points_api(request: Request):
     openid  = payload.get("openid")
     add_points(openid, delta=1)
     return {'status':1}
-
-
-
 
 
 @app.post('/get_openid/')
