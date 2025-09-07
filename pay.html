@@ -45,7 +45,7 @@
 window.open_id = "";
 const urlParams = new URLSearchParams(window.location.search);
 const code = urlParams.get('code');   // 这里就是微信带回的 code
-fetch('https://vectorizer.cn/get_openid/', {
+fetch('/get_openid/', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json'
@@ -64,7 +64,7 @@ fetch('https://vectorizer.cn/get_openid/', {
 
 // 充值函数
 function recharge(amount, credits) {
-    fetch('https://vectorizer.cn/api/order/make/', {
+    fetch('/api/order/make/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -118,7 +118,7 @@ function showPayQRCode(codeUrl, orderNo, amount) {
 // 轮询订单状态
 function startPollingOrderStatus(orderNo) {
     const checkOrder = () => {
-        fetch(`https://vectorizer.cn/api/order/status/${orderNo}/`, {
+        fetch(`/api/order/status/${orderNo}/`, {
         })
         .then(response => response.json())
         .then(data => {

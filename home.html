@@ -172,7 +172,7 @@
                 扫码关注服务号即可完成你的矢量化任务
             </div>
             <div class="qr-placeholder">
-                <span>服务号二维码<img width="100%" src="https://vectorizer.cn/static/qrcode_for_gh_889fde3766af_344.jpg"></img></span>
+                <span>服务号二维码<img width="100%" src="/static/qrcode_for_gh_889fde3766af_344.jpg"></img></span>
             </div>
         </div>
         <a class="text-muted text-decoration-none" href="http://beian.miit.gov.cn/" target="_blank">浙ICP备2024134648号</a>
@@ -181,7 +181,7 @@
         try {
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');   // 这里就是微信带回的 code
-            fetch('https://vectorizer.cn/get_openid/', {
+            fetch('/get_openid/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -194,7 +194,7 @@
             .then(data => {
                 window.open_id = data.openid;
                 // 请求添加
-                fetch('https://vectorizer.cn/add_points/', {
+                fetch('/add_points/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
