@@ -3,6 +3,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+pngtosvg_v1/
+pngtosvg_v2/
+
 # C extensions
 *.so
 
