@@ -29,6 +29,7 @@ def process_image(self, task_package: str) -> dict:
     with open(out_name, "w") as f:
         f.write(svg_content)
 
+    # 回调结果给用户
     response = requests.post(
         "http://127.0.0.1:6999/vec_notify/",
         json={"task_id": self.request.id, "result":{"url": f"{domain_name}/{out_name}"}, "openid": openid}, 

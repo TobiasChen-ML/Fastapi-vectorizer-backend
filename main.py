@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 from fastapi import FastAPI, Request, Query,Path
 import os
 import hashlib
-from wechat_pay import WechatPayAPI
+from wechat_pay.wechat_pay import WechatPayAPI
 from util import *
 from worker import process_image
 import httpx
@@ -23,7 +23,7 @@ from pydantic import BaseModel
 import redis.asyncio as redis
 
 
-from pay import *
+from wechat_pay.pay import *
 from menu import create_menu,delete_menu
 from fastapi.responses import RedirectResponse
 from llm import get_response
@@ -36,7 +36,7 @@ app = FastAPI()
 WECHAT_TOKEN = os.getenv("WECHAT_TOKEN")
 APP_ID = os.getenv("WECHAT_APP_ID")
 APP_SECRET = os.getenv("WECHAT_APP_SECRET")
-
+FREE_CREDIT = int(os.getenv("FREE_CREDIT"))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -183,11 +183,11 @@ async def get_wx_message(request: Request):
         else:
             cc = await get_counter()
 
-            if cc > 100: # 当日免费积分用完
+            if cc > FREE_CREDIT: # 当日免费积分用完
                 add_points(from_user, -1)
-                reply_content = f"今天免费额度已用完。0/100张。\n"
+                reply_content = f"今天免费额度已用完。0/{FREE_CREDIT}张。\n"
             else:
-                reply_content = f"今天免费额度剩余{100-cc}/100张。\n"
+                reply_content = f"今天免费额度剩余{FREE_CREDIT-cc}/{FREE_CREDIT}张。\n"
             task = process_image.delay(task_package)   
 
             reply_content += f"✅ 已收到图片，小矢正在为你处理矢量化…（大约需要 10 秒钟）\n👉 您剩余{get_points(from_user)}积分。"

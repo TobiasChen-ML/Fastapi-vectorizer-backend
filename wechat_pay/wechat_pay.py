@@ -3,7 +3,6 @@ import time
 import uuid
 import xml.etree.ElementTree as ET
 import requests
-from django.conf import settings
 import os
 
 class WechatPayAPI:

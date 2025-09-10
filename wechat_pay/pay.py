@@ -62,7 +62,7 @@ def build_order(user_id,amount):
     return s
     
 from datetime import datetime, timedelta
-from wepay import generate_wechatpay_v3_sign
+from wechat_pay.wepay import generate_wechatpay_v3_sign
 
 def wxpay(order_id, order_name, order_price_detail, order_total_price):
     nonce_str = random_str(32)  # 拼接出随机的字符串即可，我这里是用  时间+随机数字+5个随机字母
