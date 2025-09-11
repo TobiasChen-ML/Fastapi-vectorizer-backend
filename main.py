@@ -51,12 +51,38 @@ from redis import asyncio as aioredis
 from fastapi_cache import FastAPICache
 
 
-# prometheus monitor
-from prometheus_fastapi_instrumentator import Instrumentator
+# prometheus + grafana monitor
+from fastapi import FastAPI, Response
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
-Instrumentator().instrument(app).expose(app, include_in_schema=True, should_gzip=True)
+http_requests_total = Counter(
+    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]
+)
+http_request_duration = Histogram(
+    "http_request_duration_seconds", "HTTP latency", ["method", "endpoint"]
+)
 
+# ② 中间件：统一记录请求量 & 延迟
+@app.middleware("http")
+async def add_prometheus_metrics(request, call_next):
+    start = time.time()
+    method = request.method
+    path = request.url.path
+    try:
+        response = await call_next(request)
+        status = response.status_code
+    except Exception as e:
+        status = 500
+        raise e
+    finally:
+        http_requests_total.labels(method=method, endpoint=path, status=status).inc()
+        http_request_duration.labels(method=method, endpoint=path).observe(time.time() - start)
+    return response
 
+# ③ 暴露 Prometheus 格式指标
+@app.get("/metrics")
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 KEY_DATE = 'free_date'
 KEY_COUNT = 'counter'
