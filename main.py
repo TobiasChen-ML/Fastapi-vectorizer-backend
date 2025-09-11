@@ -50,6 +50,14 @@ logging.basicConfig(
 from redis import asyncio as aioredis
 from fastapi_cache import FastAPICache
 
+
+# prometheus monitor
+from prometheus_fastapi_instrumentator import Instrumentator
+
+Instrumentator().instrument(app).expose(app, include_in_schema=True, should_gzip=True)
+
+
+
 KEY_DATE = 'free_date'
 KEY_COUNT = 'counter'
 r: Optional[aioredis.Redis] = None
