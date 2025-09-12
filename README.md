@@ -31,7 +31,7 @@ Access our comprehensive monitoring system:
 
 - **URL**: https://grafana.vectorizer.cn
 - **Username**: guest
-- **Password**: vectorDemo2024
+- **Password**: vectorDemo2025
 
 Explore real-time system metrics, conversion statistics, and performance analytics.
 
@@ -61,12 +61,6 @@ pip install -r requirements.txt
 ```bash
 sh restart.sh
 ```
-
-## 📚 API Documentation
-
-Once running, access our interactive API documentation:
-- **Swagger UI**: `http://localhost:8000/docs`
-- **ReDoc**: `http://localhost:8000/redoc`
 
 ## 🌐 WeChat Integration
 
