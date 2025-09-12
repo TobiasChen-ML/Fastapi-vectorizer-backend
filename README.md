@@ -45,13 +45,14 @@ Explore real-time system metrics, conversion statistics, and performance analyti
 - **CI/CD Pipeline**: Automated testing and deployment workflows
 - **Multi-format Support**: Expanded input/output format compatibility
 - **User Analytics**: Advanced usage tracking and conversion analytics
+- **Cloud Storage Migration**: Transition static assets to S3 bucket instead of local storage
 
 ## ⚡ Quick Start
 
 1. **Clone the repository**:
 ```bash
-git clone https://github.com/TobiasChen-ML/BitmapToVector-AI.git
-cd BitmapToVector-AI
+git clone https://github.com/TobiasChen-ML/Fastapi-vectorizer-backend.git
+cd Fastapi-vectorizer-backend
 ```
 
 2. **Install dependencies**:
