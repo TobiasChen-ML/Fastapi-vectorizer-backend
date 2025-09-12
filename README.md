@@ -1,6 +1,6 @@
 # BitmapToVector AI: Intelligent Image Conversion Platform
 
-A sophisticated vector conversion system built with **FastAPI + Celery + Redis + SQLite + RESTful APIs + LLM + Prometheus**, delivering seamless bitmap-to-vector transformation through WeChat service account integration. Currently serving **3000+ active users**.
+A sophisticated vector conversion system built with **FastAPI + Celery + Redis + SQLite + RESTful APIs + LLM + Prometheus**, delivering seamless bitmap-to-vector transformation through WeChat service account integration. Currently serving **2700+ active users** (until 09/12/2025).
 
 ## 👋 Screenshot
 ![Wechat Services QR Code](static/qrcode_for_gh_889fde3766af_344.jpg)
@@ -64,6 +64,7 @@ pip install -r requirements.txt
 ```bash
 sh restart.sh
 ```
+![Conversion Example](static/gafrana_screen_shot.png)
 
 ## 🌐 WeChat Integration
 
