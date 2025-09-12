@@ -1,17 +1,80 @@
-# FastAPI Vectorizer Backend
+# BitmapToVector AI: Intelligent Image Conversion Platform
 
-A lightweight, production-ready backend that turns user-uploaded raster images into scalable SVG vectors inside a WeChat Service Account.
+A sophisticated vector conversion system built with **FastAPI + Celery + Redis + SQLite + RESTful APIs + LLM + Prometheus**, delivering seamless bitmap-to-vector transformation through WeChat service account integration. Currently serving **3000+ active users**.
+![Wechat Services QR Code](static/qrcode_for_gh_889fde3766af_344.jpg)
+![Conversion Example](static/wechat_2025-08-31_204955_134.jpg)
 
-## Features
-- **WeChat server validation & image reception**
-- **On-the-fly PNG/JPG → SVG conversion** (via Potrace or your own engine)
-- **Cloud storage upload** (Tencent COS) and signed-url delivery
-- **JSAPI payment flow** for “per-image credits”
-- **Real-time quota management** after successful payments
+## 👨‍💻 About the Developer
 
-## Overview
-Deploy once, and users can chat an image to your service, pay for credits, and receive a download link to the generated SVG—all within the 48-hour WeChat message window.
+Hi, I'm **Tobias Chen**, a Python/Django developer specializing in building scalable, production-ready web applications.
+My expertise spans **backend engineering, API design, cloud deployments, Machine Learning, and Data Science**. I prioritize **clean architecture, CI/CD automation, and maintainability** - essential qualities for remote-first development teams.
 
+- 🌍 Open to **remote opportunities across Europe/Australia/Asia/North America**
+- 💼 Strong experience with **Python, Django, REST APIs, Docker, PostgreSQL**
+- ⚙️ Familiar with **async processing, Celery, Redis, and modern CI/CD pipelines, Azure**
+- 🎨 Passionate about projects combining **web apps + image processing + automation**
+- 🔗 [LinkedIn](https://www.linkedin.com/in/jiawei-chen-4095802a9/) | [GitHub](https://github.com/TobiasChen-ML)
+- 📧 tobiaschannel1999@gmail.com
 
-## Usage
-gunicorn -c gunicorn.py -k uvicorn.workers.UvicornH11Worker  main:app --daemon
+## 🛠️ Core Technology Stack
+
+- **FastAPI**: High-performance asynchronous web framework for building robust APIs
+- **AI Vectorizer**: Potrace-based conversion engine with intelligent preprocessing
+- **Celery + Redis**: Distributed task management and message brokering
+- **Prometheus + Grafana**: Real-time monitoring and alerting infrastructure
+- **LangChain**: LLM integration for intelligent user interactions
+- **SQLite**: Lightweight database optimized for current scale requirements
+
+## 📊 Live Monitoring Dashboard
+
+Access our comprehensive monitoring system:
+
+- **URL**: https://grafana.vectorizer.cn
+- **Username**: guest
+- **Password**: vectorDemo2024
+
+Explore real-time system metrics, conversion statistics, and performance analytics.
+
+## 🚀 Roadmap & Future Enhancements
+
+- **Intelligent Chat Assistant**: LangChain integration for contextual user guidance
+- **Enhanced Conversion Algorithms**: Machine learning-powered vectorization improvements
+- **Containerization**: Full Docker implementation for streamlined deployment
+- **CI/CD Pipeline**: Automated testing and deployment workflows
+- **Multi-format Support**: Expanded input/output format compatibility
+- **User Analytics**: Advanced usage tracking and conversion analytics
+
+## ⚡ Quick Start
+
+1. **Clone the repository**:
+```bash
+git clone https://github.com/TobiasChen-ML/BitmapToVector-AI.git
+cd BitmapToVector-AI
+```
+
+2. **Install dependencies**:
+```bash
+pip install -r requirements.txt
+```
+
+3. **Launch the platform**:
+```bash
+sh restart.sh
+```
+
+## 📚 API Documentation
+
+Once running, access our interactive API documentation:
+- **Swagger UI**: `http://localhost:8000/docs`
+- **ReDoc**: `http://localhost:8000/redoc`
+
+## 🌐 WeChat Integration
+
+Interact with our service through WeChat official account:
+- Search for **"位图转矢量"** (Bitmap to Vector)
+- Upload images directly for instant conversion
+- Receive vector files in multiple formats
+
+---
+
+*For collaboration opportunities or technical inquiries, please contact me at tobiaschannel1999@gmail.com*
