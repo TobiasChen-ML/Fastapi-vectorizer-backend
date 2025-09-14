@@ -140,8 +140,6 @@ async def wechat_verify(
         return int(echostr)
     return "fail"
 
-
-
 @app.post('/wx-server/msg/')
 async def get_wx_message(request: Request):
     """

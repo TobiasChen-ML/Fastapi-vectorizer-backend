@@ -75,4 +75,6 @@ Interact with our service through WeChat official account:
 
 ---
 
+Video: https://www.youtube.com/watch?v=oFNgE-OeoGw
+
 *For collaboration opportunities or technical inquiries, please contact me at tobiaschannel1999@gmail.com*
