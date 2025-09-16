@@ -5,6 +5,7 @@ __pycache__/
 
 pngtosvg_v1/
 pngtosvg_v2/
+vec.py
 
 # C extensions
 *.so
