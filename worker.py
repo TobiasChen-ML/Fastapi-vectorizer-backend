@@ -7,14 +7,25 @@ import uuid
 from vec import bitmap_to_bezier
 from celery import Celery
 import requests
-
+from celery.schedules import crontab
 # ----------------- 连接 Redis -----------------
 celery_app = Celery(
     "tasks",
     broker="redis://127.0.0.1:6379/0",
     backend="redis://127.0.0.1:6379/0",
 )
-
+# tasks.py
+celery_app.conf.update(
+    timezone='Asia/Shanghai',
+    enable_utc=False,
+    beat_schedule={
+        'check-every-minute': {
+            'task': 'tasks.everyminutecheck',   # 与 name= 保持一致
+            'schedule': crontab(),
+            'args': (),
+        },
+    },
+)
 @celery_app.task(bind=True, name="tasks.process_image")
 def process_image(self, task_package: str) -> dict:
     self.update_state(state="PROCESSING")  # 非必需，方便前端轮询
@@ -38,3 +49,8 @@ def process_image(self, task_package: str) -> dict:
 
     self.update_state(state="SUCCESS")  # 非必需，方便前端轮询
     return {"openid": openid ,"url": f"{domain_name}/{out_name}"}
+
+@celery_app.task(bind=True, name='tasks.everyminutecheck')
+def everyminutecheck(self):
+    requests.post('http://127.0.0.1:6999/check/payment')
+    return True

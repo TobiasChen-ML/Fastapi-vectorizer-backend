@@ -56,6 +56,12 @@ def list_payments(user_id: str) -> List[Payment]:
     with Session(engine) as s:
         return s.exec(select(Payment).where(Payment.user_id == user_id)).all()
 
+def list_all_payments() -> List[Payment]:
+    """
+    返回数据库中所有支付记录
+    """
+    with Session(engine) as s:
+        return s.exec(select(Payment)).all()
 
 def update_payment_by_order_id(order_id: str, **kwargs) -> Optional[Payment]:
     with Session(engine) as s:

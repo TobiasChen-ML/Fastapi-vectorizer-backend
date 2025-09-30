@@ -364,12 +364,12 @@ async def wechat_notify(request:Request):
                 info = get_payment(order_id=data.get('out_trade_no'))
                 amount = float(info.amount)
                 
-                if amount == 0.01:        
-                    add_points(openid, delta=20)
-                    logging.info(f"用户 {openid} 充值 {amount} 元, 增加20积分")
-                elif amount == 19.99:
+                if amount == 19.99:        
                     add_points(openid, delta=100)
                     logging.info(f"用户 {openid} 充值 {amount} 元, 增加100积分")
+                elif amount == 49.99:
+                    add_points(openid, delta=1000)
+                    logging.info(f"用户 {openid} 充值 {amount} 元, 增加1000积分")
                 # 1. 拿 token
                 token = await get_access_token()
 
@@ -416,6 +416,36 @@ async def get_order_status(orderNo: str = Path(..., description="订单号")):
     except:
         return JSONResponse({
         }, status_code=404) 
+
+@app.get("/api/order/all")
+def get_payment():
+    # 获取所有payment
+    return list_all_payments()
+
+@app.get("/api/add_point/{userid}/{points}")
+async def add_points2(userid: str = Path(..., description="订单号"),points: str = Path(..., description="订单号")):
+    add_points(userid,int(points))
+    return JSONResponse({"p":get_points(user_id=userid)},status_code=200)
+
+@app.get('/api/get_points/{userid}')
+async def add_points3(userid: str = Path(..., description="订单号")):
+    p = get_points(user_id=userid)
+    return JSONResponse({"p":p},status_code=200)
+
+@app.post('/check/payment')
+async def check_payment_1_minute():
+    # all_payments = list_all_payments()
+    # if all_payments[-1].status == "Success":
+    #     paytime = all_payments[-1].created_at
+    #     target = datetime.fromisoformat(paytime)   # 解析带 T 的 ISO 格式
+    #     now = datetime.now()                       # 本地时间；若要 UTC 用 datetime.utcnow()
+    #     if abs(now - target) <= timedelta(minutes=2):
+    #         if all_payments[-1]["amount"] == "9.99":
+    #             add_points(all_payments[-1].user_id,20)
+    #         else:
+    #             add_points(all_payments[-1].user_id,100)
+
+    return True
 
 @app.get("/logs_all/", response_class=PlainTextResponse)
 def show_logs(lines: int = 200):
