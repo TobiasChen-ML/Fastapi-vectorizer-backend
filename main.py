@@ -318,6 +318,21 @@ async def get_openid(request: Request):
     openid = data["openid"] 
     return {"openid": openid}
 
+@app.post('/api/order/make_by_listing/')
+async def make_order_by_listing(request: Request):
+    """
+    接收用户下单请求
+    """
+    payload = await request.json()
+    openid  = payload.get("shop_code")
+    amount  = payload.get("amount")
+
+    print(f"用户 {openid} 下单 {amount} 元")
+    logging.info(f"用户 {openid} 下单 {amount} 元")
+    s = build_order(openid,amount,order_name="ListingCopilot-TIKTOK-SERVICE",order_detail="ListingCopilot-TIKTOK-SERVICE")
+    return fastapi.Response(s)
+
+
 @app.post('/api/order/make/')
 async def make_order(request: Request):
     """
@@ -338,6 +353,7 @@ async def make_order(request: Request):
         s = build_order(openid,amount)
 
         return fastapi.Response(s)
+
 @app.post('/wechat/notify/')
 async def wechat_notify(request:Request):
     """微信支付结果通知"""
@@ -370,6 +386,18 @@ async def wechat_notify(request:Request):
                 elif amount == 49.99:
                     add_points(openid, delta=1000)
                     logging.info(f"用户 {openid} 充值 {amount} 元, 增加1000积分")
+                elif amount == 0.01:
+                    # 我的88会员费
+                    logging.info(f"用户 {openid} 充值 {amount} 元, tiktok店铺")
+
+                    # 调用listing接口，回调回去
+                    res = requests.post("https://listingcopilot.top/wxpay/notify/",json=openid)
+
+                    return PlainTextResponse(
+                        content="<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>",
+                        media_type="text/xml"
+                    )
+
                 # 1. 拿 token
                 token = await get_access_token()
 
