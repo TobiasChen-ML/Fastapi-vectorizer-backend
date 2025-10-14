@@ -462,16 +462,30 @@ async def add_points3(userid: str = Path(..., description="订单号")):
 
 @app.post('/check/payment')
 async def check_payment_1_minute():
-    # all_payments = list_all_payments()
-    # if all_payments[-1].status == "Success":
-    #     paytime = all_payments[-1].created_at
-    #     target = datetime.fromisoformat(paytime)   # 解析带 T 的 ISO 格式
-    #     now = datetime.now()                       # 本地时间；若要 UTC 用 datetime.utcnow()
-    #     if abs(now - target) <= timedelta(minutes=2):
-    #         if all_payments[-1]["amount"] == "9.99":
-    #             add_points(all_payments[-1].user_id,20)
-    #         else:
-    #             add_points(all_payments[-1].user_id,100)
+    all_payments = list_all_payments()
+    for payment in all_payments:
+        user_id = payment.user_id
+        amount = payment.amount
+        paytime = payment.created_at
+        # 将字符串 paytime 转成带时区信息的 datetime
+        # 确保 paytime 是字符串
+        if isinstance(paytime, datetime):
+            target = paytime.replace(tzinfo=timezone.utc)
+        else:
+            target = datetime.fromisoformat(str(paytime)).replace(tzinfo=timezone.utc)
+        # 获取当前时间并统一为 UTC 时区
+        now = datetime.now(timezone.utc)
+        # 判断支付成功且时间在 10 分钟以内
+        if payment.status == "Success" and abs(now - target) <= timedelta(minutes=5):
+            logging.info(f"用户 {user_id} 充值 {amount} 元, tiktok店铺")
+            # 调用listing接口，回调回去
+            payload = json.dumps({
+                "openid": user_id
+            })
+            res = requests.post("https://listingcopilot.top/wxpay/notify/",data=payload,headers={
+                'Content-Type': 'application/json'
+            })
+            print(res)
 
     return True
 
